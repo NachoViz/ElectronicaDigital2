@@ -1,0 +1,97 @@
+
+    LIST    P=16F887
+     
+    #include <P16f887.INC>
+    
+__CONFIG _CONFIG1, _FOSC_INTRC_NOCLKOUT & _WDTE_OFF & _PWRTE_OFF & _MCLRE_ON & _CP_OFF & _CPD_OFF & _BOREN_OFF & _IESO_OFF & _FCMEN_OFF & _LVP_OFF
+__CONFIG _CONFIG2, _BOR4V_BOR40V & _WRT_OFF
+    
+    #DEFINE RST		PORTB,RB4
+    #DEFINE SUMADOR     PORTB,RB5
+    #DEFINE RESTADOR	PORTB,RB6
+    #DEFINE PULSADOR	PORTC,RC0
+    
+    CBLOCK 0X20
+    T1
+    T2
+    T3
+    AUX
+    CONTADOR
+    CONTADOR2
+    ENDC
+    
+    ORG 0X00
+    GOTO INICIO
+    
+    ORG 0X05
+INICIO
+    BANKSEL ANSELH
+    CLRF    ANSELH
+    CLRF    ANSEL
+    BANKSEL TRISB
+    MOVLW   B'01110000'
+    MOVWF   TRISB
+    BANKSEL PORTB
+    CLRF    PORTB
+    
+    
+    MOVLW   .0
+    MOVWF   CONTADOR
+
+INICIO1   
+X4
+    BTFSS   SUMADOR
+    GOTO    X5
+    CALL    AUMENTA
+    CALL    RETARDO
+X5
+    BTFSS   RESTADOR
+    GOTO    X6
+    CALL    RESTA
+    CALL    RETARDO
+X6
+    BTFSS   RST
+    GOTO    X4
+    GOTO    $-13
+    GOTO    INICIO1
+   
+    
+AUMENTA
+    INCF    CONTADOR,F
+    MOVF    CONTADOR,W
+    MOVWF   PORTB
+    RETURN
+RESTA
+    DECF    CONTADOR,F
+    MOVF    CONTADOR,W
+    MOVWF   PORTB
+    RETURN
+    
+    
+DISPLAY
+    SWAPF	CONTADOR2,W
+    ADDWF	CONTADOR,W
+    MOVWF	PORTD
+    RETURN
+    
+    
+RETARDO
+    MOVLW   D'5'
+    MOVWF   T1
+L1
+    MOVLW   D'100'
+    MOVWF   T2
+L2
+    MOVLW   D'200'
+    MOVWF   T3
+L3
+    NOP
+    DECFSZ  T3, F
+    GOTO    L3
+    DECFSZ  T2, F
+    GOTO    L2
+    DECFSZ  T1, F
+    GOTO    L1
+    RETURN
+ 
+    END
