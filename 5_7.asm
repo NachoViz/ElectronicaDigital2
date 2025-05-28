@@ -1,0 +1,85 @@
+
+     LIST    P=16F887
+     #include <P16F887.INC>
+    
+__CONFIG _CONFIG1, _FOSC_INTRC_NOCLKOUT & _WDTE_OFF & _PWRTE_OFF & _MCLRE_ON & _CP_OFF & _CPD_OFF & _BOREN_OFF & _IESO_OFF & _FCMEN_OFF & _LVP_OFF
+__CONFIG _CONFIG2, _BOR4V_BOR40V & _WRT_OFF
+    
+    CBLOCK 0x20
+    CONT
+    AUX
+    ENDC
+    
+    CBLOCK 0X70
+    W_TEMP
+    STATUS_TEMP
+    ENDC
+
+    ORG 0X00
+    GOTO INICIO
+    ORG	0X04
+    GOTO ISR
+    ORG 0X05
+    
+INICIO
+    BANKSEL	ANSELH
+    CLRF	ANSELH
+    BANKSEL	TRISB
+    BSF		TRISB,RB0
+    BCF		OPTION_REG,INTEDG
+    CLRF	TRISD
+    BSF		INTCON,GIE
+    BSF		INTCON,INTE
+   
+    BANKSEL	PORTD
+    CLRF	PORTD
+
+    CLRF	CONT
+    
+LOOP
+    MOVF    CONT,W
+    CALL    TABLA
+    MOVWF   PORTD
+    
+    GOTO LOOP
+    
+ISR
+ ; GUARDO CONTEXTO
+    MOVWF W_TEMP
+    SWAPF STATUS, W
+    MOVWF STATUS_TEMP
+     
+    CALL INCR_CONT
+    BCF	INTCON,INTF
+   
+ ; RECUPERO CONTEXTO
+     SWAPF STATUS_TEMP, W
+    MOVWF STATUS
+    SWAPF W_TEMP, F
+    SWAPF W_TEMP, W
+    RETFIE
+    
+    
+INCR_CONT
+    INCF    CONT,F
+    MOVLW   .10
+    MOVWF   AUX
+    MOVF    CONT,W
+    SUBWF   AUX,W
+    BTFSC   STATUS,Z
+    CLRF    CONT
+    RETURN
+    
+TABLA
+	  ADDWF PCL, F
+	  RETLW 0x3F           ;0
+	  RETLW 0x06           ;1
+	  RETLW 0x5B           ;2
+	  RETLW 0x4F           ;3
+	  RETLW 0x66           ;4
+	  RETLW 0x6D           ;5
+	  RETLW 0x7D           ;6
+	  RETLW 0x07           ;7
+	  RETLW 0x7F           ;8
+	  RETLW 0x67           ;9
+    END
